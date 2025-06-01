@@ -1,5 +1,5 @@
 // Projekt: Loxone ↔ Homematic Bridge (Go)
-// Autor: Dein Name
+// Autor: Niclas Schnell
 // Lizenz: MIT
 
 package main
