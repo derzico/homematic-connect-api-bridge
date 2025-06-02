@@ -15,11 +15,10 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// Konfiguration
-const (
-	wsURL     = "ws://<homematic-ip>:<port>/api/ws"
-	token     = "<dein_token>"
-	httpPort  = ":8080"
+var (
+	wsURL = os.Getenv("HOMEMATIC_URL")
+	token = os.Getenv("HOMEMATIC_TOKEN")
+	httpPort = ":8080"
 )
 
 var conn *websocket.Conn
@@ -36,6 +35,10 @@ func sendPluginState() error {
 }
 
 func connectWebSocket() {
+	if wsURL == "" || token == "" {
+		log.Fatalln("Fehlende Umgebungsvariablen: HOMEMATIC_URL und/oder HOMEMATIC_TOKEN")
+	}
+
 	header := http.Header{}
 	header.Add("Authorization", "Bearer "+token)
 
