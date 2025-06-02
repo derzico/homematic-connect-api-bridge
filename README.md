@@ -1,33 +1,20 @@
-# Loxone ↔ Homematic IP Bridge
+# Homematic Connect API Bridge (Loxone ↔ Homematic)
 
-Diese Go-Anwendung stellt eine Middleware bereit, die HTTP-Befehle von Loxone entgegennimmt und über WebSocket an eine Homematic IP Zentrale weiterleitet.
+Ein kleiner Go-basierter HTTP-zu-WebSocket-Proxy, der Loxone HTTP-Befehle entgegennimmt und an eine Homematic IP Zentrale weiterleitet.
 
 ## Features
 
-- Leichte Ansteuerung von Homematic-Geräten per HTTP
-- Läuft als eigenständiges Binary oder in Docker
-- Minimaler Wartungsaufwand (nur 1 externe Abhängigkeit)
+- Einfache Steuerung von Homematic-Geräten über Loxone
+- Minimaler Ressourcenverbrauch
+- Bereit für Docker
+- Konfigurierbar über Umgebungsvariablen
+
+---
 
 ## API
 
+```http
 GET /setSwitch?device=<deviceId>&state=on|off
 
-
-## Konfiguration
-
-Passe in `main.go` folgende Zeilen an:
-
-```go
-const (
-    wsURL     = "ws://<homematic-ip>:<port>/api/ws"
-    token     = "<dein_token>"
-)
-
-## Kompilieren
-
-go build -o homematic-bridge
-
-## Docker
-
-docker build -t homematic-bridge .
-docker run -p 8080:8080 --env HOMEMATIC_URL=... --env HOMEMATIC_TOKEN=... homematic-bridge
+Beispiel:
+GET http://<bridge-ip>:8080/setSwitch?device=HmIP-ABC1234567&state=on
