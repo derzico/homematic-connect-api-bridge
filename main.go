@@ -8,17 +8,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
 )
 
 var (
-	wsURL = os.Getenv("HOMEMATIC_URL")
-	token = os.Getenv("HOMEMATIC_TOKEN")
-	httpPort = ":8080"
+	wsURL     = os.Getenv("HOMEMATIC_URL")
+	token     = os.Getenv("HOMEMATIC_TOKEN")
+	httpPort  = ":8080"
+	authUser  = os.Getenv("BRIDGE_USER")
+	authPass  = os.Getenv("BRIDGE_PASS")
 )
 
 var conn *websocket.Conn
@@ -71,6 +75,18 @@ func connectWebSocket() {
 	}
 }
 
+func basicAuth(handler http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user, pass, ok := r.BasicAuth()
+		if !ok || user != authUser || pass != authPass {
+			w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		handler(w, r)
+	}
+}
+
 func setSwitchHandler(w http.ResponseWriter, r *http.Request) {
 	deviceID := r.URL.Query().Get("device")
 	state := r.URL.Query().Get("state")
@@ -107,13 +123,17 @@ func stringToUpper(s string) string {
 	if len(s) == 0 {
 		return s
 	}
-	return string(s[0]-32) + s[1:]
+	return strings.ToUpper(s)
 }
 
 func main() {
+	if authUser == "" || authPass == "" {
+		log.Fatalln("Fehlende Umgebungsvariablen: BRIDGE_USER und/oder BRIDGE_PASS")
+	}
+
 	go connectWebSocket()
 
-	http.HandleFunc("/setSwitch", setSwitchHandler)
+	http.HandleFunc("/setSwitch", basicAuth(setSwitchHandler))
 	log.Println("HTTP-Server läuft auf Port", httpPort)
 	err := http.ListenAndServe(httpPort, nil)
 	if err != nil {
